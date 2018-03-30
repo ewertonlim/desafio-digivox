@@ -1,0 +1,231 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Desafio Digivox</title>
+
+<link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+<script type="text/javascript" src="js/jquery.1.10.2.min.js"></script>
+<script type="text/javascript" src="js/canvasjs.min.js"></script>
+
+<script type="text/javascript">
+window.onload = function() {
+	var dataDespesas = [];
+	var chart;
+	$.getJSON("lancamento/DESPESA/grafico", function(data) {  
+		$.each(data, function(arrayID, value){
+			dataDespesas.push({label: value.key, y: parseInt(value.value)});
+		});
+		
+		chart = new CanvasJS.Chart("chartContainer",{
+			title:{
+				text:"Acompanhamento em tempo real das despesas"
+			},
+			axisY: {
+				prefix: "R$",
+				labelFormatter: addSymbols
+			},
+			toolTip: {
+				shared: true
+			},
+			legend: {
+				cursor: "pointer",
+				itemclick: toggleDataSeries
+			},
+			data: [
+				{
+				type: "column",
+				name: "Despesa",
+				dataPoints : dataDespesas,
+			  },
+			 
+			]
+		});
+		chart.render();
+	});
+	
+	function updateChart() {
+		var dataDespesas = [];
+		var chart;
+		$.getJSON("lancamento/DESPESA/grafico", function(data) {  
+			$.each(data, function(arrayID, value){
+				dataDespesas.push({label: value.key, y: parseInt(value.value)});
+			});
+			
+			chart = new CanvasJS.Chart("chartContainer",{
+				title:{
+					text:"Acompanhamento em tempo real das despesas"
+				},
+				axisY: {
+					prefix: "R$",
+					labelFormatter: addSymbols
+				},
+				toolTip: {
+					shared: true
+				},
+				legend: {
+					cursor: "pointer",
+					itemclick: toggleDataSeries
+				},
+				data: [
+					{
+					type: "column",
+					name: "Despesa",
+					showInLegend: true,
+					dataPoints : dataDespesas,
+				  },
+				 
+				]
+			});
+			chart.render();
+			
+		});
+	};
+	
+	setInterval(function () { updateChart() }, 5000);
+	
+	function addSymbols(e) {
+		var suffixes = ["", "K", "M", "B"];
+		var order = Math.max(Math.floor(Math.log(e.value) / Math.log(1000)), 0);
+
+		if (order > suffixes.length - 1)
+			order = suffixes.length - 1;
+
+		var suffix = suffixes[order];
+		return CanvasJS.formatNumber(e.value / Math.pow(1000, order)) + suffix;
+	}
+
+	function toggleDataSeries(e) {
+		if (typeof (e.dataSeries.visible) === "undefined" || e.dataSeries.visible) {
+			e.dataSeries.visible = false;
+		} else {
+			e.dataSeries.visible = true;
+		}
+		e.chart.render();
+	}
+	
+}
+</script>
+
+</head>
+
+<nav class="navbar navbar-inverse">
+	<div class="container">
+		<div class="navbar-header">
+			<a class="navbar-brand" href="#">Desafio Digivox</a>
+		</div>
+	</div>
+</nav>
+
+<!-- <div class="container" style="width:45%;float:left;"> -->
+
+<!-- 	<div class="starter-template"> -->
+<!-- 		<h1>Cadastrar Cliente</h1> -->
+<!-- 		<br> -->
+
+<!-- 		<div id="feedback"></div> -->
+
+<!-- 		<form class="form-horizontal" id="cadastrar-cliente-form"> -->
+<!-- 			<div class="form-group form-group-lg"> -->
+<!-- 				<label class="col-sm-2 control-label">Nome:</label> -->
+<!-- 				<div class="col-sm-10"> -->
+<!-- 					<input type=text class="form-control" id="nome"> -->
+<!-- 				</div> -->
+<!-- 			</div> -->
+<!-- 			<div class="form-group form-group-lg"> -->
+<!-- 				<label class="col-sm-2 control-label">Email:</label> -->
+<!-- 				<div class="col-sm-10"> -->
+<!-- 					<input type="text" class="form-control" id="email"> -->
+<!-- 				</div> -->
+<!-- 			</div>	 -->
+<!-- 			<div class="form-group form-group-lg"> -->
+<!-- 				<label class="col-sm-2 control-label">Celular:</label> -->
+<!-- 				<div class="col-sm-10"> -->
+<!-- 					<input type="text" class="form-control" id="celular"> -->
+<!-- 				</div> -->
+<!-- 			</div> -->
+
+<!-- 			<div class="form-group"> -->
+<!-- 				<div class="col-sm-offset-2 col-sm-10"> -->
+<!-- 					<button type="submit" id="bth-cadastrar-cliente" -->
+<!-- 						class="btn btn-primary btn-lg">Cadastrar</button> -->
+<!-- 				</div> -->
+<!-- 			</div> -->
+<!-- 		</form> -->
+
+<!-- 	</div> -->
+
+<!-- </div> -->
+
+<div class="container2">
+
+	<div class="starter-template">
+		<h1>DashBoard</h1>
+		<br>
+
+		<div id="feedback"></div>
+
+	<div id="chartContainer" style="height: 300px; width: 100%;"></div>
+	</div>
+
+</div>
+
+<script>
+	jQuery(document).ready(function($) {
+
+		$("#cadastrar-cliente-form").submit(function(event) {
+
+			// Disble the search button
+			enableSearchButton(false);
+
+			// Prevent the form from submitting via the browser.
+			event.preventDefault();
+
+			cadastrarClienteViaAjax();
+
+		});
+
+	});
+
+	function cadastrarClienteViaAjax() {
+
+		var cliente = {}
+		cliente["nome"] = $("#nome").val();
+		cliente["email"] = $("#email").val();
+
+		$.ajax({
+			type : "POST",
+			contentType : "application/json",
+			url : "/cliente",
+			data : JSON.stringify(cliente),
+			dataType : 'json',
+			timeout : 100000,
+			success : function(data) {
+				console.log("SUCCESS: ", data);
+				display(data);
+			},
+			error : function(e) {
+				console.log("ERROR: ", e);
+				display(e);
+			},
+			done : function(e) {
+				console.log("DONE");
+				enableSearchButton(true);
+			}
+		});
+
+	}
+
+	function enableSearchButton(flag) {
+		$("#bth-cadastrar-cliente").prop("disabled", flag);
+	}
+
+	function display(data) {
+		var json = "<h4>Ajax Response</h4><pre>"
+				+ JSON.stringify(data, null, 4) + "</pre>";
+		$('#feedback').html(json);
+	}
+</script>
+
+</body>
+</html>
